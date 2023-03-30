@@ -2,5 +2,5 @@
 SegCompletion
 
 ## Cotton Dataset:
-https://pan.baidu.com/s/1BxP1iZoIDQWEtQjkuJWA5w
-Extraction Code：iynb
+链接：https://pan.baidu.com/s/1BxP1iZoIDQWEtQjkuJWA5w
+提取码：iynb
