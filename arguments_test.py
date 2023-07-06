@@ -1,54 +1,46 @@
 
 import argparse
 
+
 def parse_args():
     '''PARAMETERS'''
     parser = argparse.ArgumentParser('PointNet')
     parser.add_argument('--batch_size', type=int, default=1, help='batch size in testing [default: 24]')
     parser.add_argument('--gpu', type=str, default='0', help='specify gpu device [default: 0]')
-    parser.add_argument('--root', type=str, default='../data_ours/DrawPoint/', help='Adam or SGD [default: Adam]')
+    parser.add_argument('--root', type=str, default='../data_ours/TrainPoint/', help='Adam or SGD [default: Adam]')
     #  TrainPoint  DrawPoint
-    parser.add_argument('--netG', default='./Pth_FPnet/point_netG175.pth',help="path to netG (to continue training)")
-           # 与上方的 class_choice 相呼应，这里一定要含那个种类
+    parser.add_argument('--netG', default='./Pth_FPnet/point_netG200.pth',help="path to netG (to continue training)")
 
     # Point++
-    parser.add_argument('--npoint', type=int,  default=40960, help='Point Number [default: 2048]')# 10240 #2048 * 7个2  = 262144
-    # FPnet 这俩个需一样
-    parser.add_argument('--num_points', default=1024, type=int,metavar='N', help='points in point-cloud (default: 1024)') # FPNETT下采样的个数，输入网络前
+    parser.add_argument('--npoint', type=int,  default=20480, help='Point Number [default: 2048]')
+    # FPnet
+    parser.add_argument('--num_points', default=1024, type=int,metavar='N', help='points in point-cloud (default: 1024)')
     parser.add_argument('--FPnetNeed_point', type=int,  default=1024, help='每片你叶子需要的点数  Point Number [default: 2048]')
 
     parser.add_argument('--point_scales_list', type=list, default=[1024,512,256],
                         help='number of points in each scales')
     parser.add_argument('--crop_point_num', type=int, default=256, help='0 means do not use else use with this weight')
 
-
     parser.add_argument('--log_dir', type=str, default='pointnet2_part_seg_msg', help='Experiment root')
     parser.add_argument('--normal', action='store_true', default=False, help='Whether to use normal information [default: False]')
     parser.add_argument('--num_votes', type=int, default=3, help='Aggregate segmentation scores with voting [default: 3]')
 
 
-   # point++ 中后加的
-
+   # point++
     parser.add_argument('--num_classes', type=int,  default=16, help='')
-    parser.add_argument('--num_part', type=int,  default=50, help='') # s 所有的物体被分为多少类别
-
-
+    parser.add_argument('--num_part', type=int,  default=50, help='')
 
 
    # PFnet
-
     # parser.add_argument('--dataset',  default='ModelNet40', help='ModelNet10|ModelNet40|ShapeNet')
-    parser.add_argument('--dataroot', default='dataset/train', help='path to dataset')  # 加载数据集的路径
+    parser.add_argument('--dataroot', default='dataset/train', help='path to dataset')
     parser.add_argument('--class_choice', default='Airplane',
-                        help='choice something to learn for Gan')  # 寻选择那个种类进行与gan合作，去生成样本
+                        help='choice something to learn for Gan')
     parser.add_argument('--netD', default='', help="path to netD (to continue training)")
-
 
     parser.add_argument('--workers', type=int, default=0, help='number of data loading workers')
     parser.add_argument('--batchSize', type=int, default=1, help='input batch size')
     parser.add_argument('--pnum', type=int, default=1024, help='the point number of a sample')
-
-
 
     parser.add_argument('--nc', type=int, default=3)
     parser.add_argument('--niter', type=int, default=300, help='number of epochs to train for')

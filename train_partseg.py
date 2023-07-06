@@ -14,25 +14,12 @@ import numpy as np
 import open3d as o3d
 
 
-
-from  Code_pointnet2.data_utils.Amain_onetree_abstractleaf import OneTree_SplitLeaf,OneTree_GetAllLeaf,OneTree_GetLeafLabel
-
-
-# @ 20200809 调整 数据集 -  这里是能够正常运行的
-"""
-训练所需设置参数：
---model pointnet2_part_seg_msg 
---normal 
-"""
-
 def to_categorical(y, num_classes):
     """ 1-hot encodes a tensor """
     new_y = torch.eye(num_classes)[y.cpu().data.numpy(),]
     if (y.is_cuda):
         return new_y.cuda()
     return new_y
-
-
 
 def load_data(args):
 
@@ -89,8 +76,6 @@ def onint(args):
     log_dir = experiment_dir.joinpath('logs/')
     log_dir.mkdir(exist_ok=True)
 
-    # shutil.copy('%s.py' % args.model, str(experiment_dir))
-    # shutil.copy('Code_pointnet2/models/pointnet_util.py', str(experiment_dir))
     '''LOG'''
     logger = logging.getLogger("Model")
     logger.setLevel(logging.INFO)
@@ -102,11 +87,6 @@ def onint(args):
     logger.info('PARAMETER ...')
     logger.info(args)
 
-
-
-
-
-
     return device,experiment_dir,checkpoints_dir,seg_classes,seg_label_to_cat
 
 
@@ -117,19 +97,6 @@ def OninitNetwork(args,device,experiment_dir):
     classifier = MODEL.get_model(args.num_part, normal_channel=args.normal).cuda()
     criterion = MODEL.get_loss().cuda()
     criterion.to(device)
-
-    ### New
-    # classifier = torch.nn.DataParallel(classifier, device_ids=args.gpu_ids)  # 也可以是两个 device_ids=[1,2]
-    # classifier.to(device)
-    ### ##############################
-
-    # try:
-    #     checkpoint = torch.load(str(experiment_dir) + '/checkpoints/best_model.pth')
-    #     start_epoch = checkpoint['epoch']
-    #     PointNetModel.load_state_dict(checkpoint['model_state_dict'])
-    # except:
-    #     start_epoch = 0
-    #     PointNetModel = PointNetModel.apply(weights_init)
 
     start_epoch = 0
     classifier = classifier.apply(weights_init)
@@ -150,14 +117,9 @@ def weights_init(m):
         torch.nn.init.xavier_normal_(m.weight.data)
         torch.nn.init.constant_(m.bias.data, 0.0)
 
-
-# 这里存在 问题， 难道不返回吗？
 def bn_momentum_adjust(m, momentum):
     if isinstance(m, torch.nn.BatchNorm2d) or isinstance(m, torch.nn.BatchNorm1d):
         m.momentum = momentum
-
-
-
 
 def PointNet_adjustepoch(args,epoch,PointNetModel,optimizer):
     lr = max(args.learning_rate * (args.lr_decay ** (epoch // args.step_size)),
@@ -175,46 +137,14 @@ def PointNet_adjustepoch(args,epoch,PointNetModel,optimizer):
     return PointNetModel
 
 
-
-def cauleNor(pcd_vector, xx):  # 传入的是 numpy
-
-
-
-    Batch, PointNumber, c = xx.shape
-    radius = 0.01  # 搜索半径
-    max_nn = 30  # 邻域内用于估算法线的最大点数
-    TempNumpy = np.zeros((Batch, PointNumber, 6), dtype=np.float32)
-    xx = xx.detach().numpy()
-
-    for i in range(Batch):
-        # print(type(xx[i][:, :3]))
-        pcd_vector.points = o3d.utility.Vector3dVector(xx[i][:, :3])  # 加载入点坐标
-        pcd_vector.estimate_normals(search_param=o3d.geometry.KDTreeSearchParamHybrid(radius, max_nn))
-        TempOnedata = np.concatenate((pcd_vector.points, pcd_vector.normals), axis=1)
-        TempNumpy[i] = TempOnedata
-
-    return torch.as_tensor(TempNumpy)  # NUMPY   to  tensor
-
-
-
-#############################################################
-#  目标： 将原始数据进行处理，变成符合的    点数，法向量 label 等
-
 def OneBatchData(device,data,pcd_vector):
     points, label, target = data
 
-    batch,pointsnumber,fear =points.shape
-
-    # 不需要法向量？
-
-    # if fear <6 :
-    #     points = cauleNor(pcd_vector, points[:,:,:3])
 
     # 增加 噪点等
     points = points.data.numpy()
     points[:, :, 0:3] = random_scale_point_cloud(points[:, :, 0:3])
     points[:, :, 0:3] = shift_point_cloud(points[:, :, 0:3])
-    #points, label, target = points.float().cuda(), label.long().cuda(), target.long().cuda()
 
     points = torch.tensor(points).float()
     label = torch.tensor(label).long()
@@ -228,47 +158,6 @@ def OneBatchData(device,data,pcd_vector):
 
     return points, label, target
 
-
-def  savetestpoint(savename, tempdata):
-    savepath = './output_testpoint/'
-    if(os.path.exists(savepath) == False):
-        os.makedirs(savepath)
-    tempdata = torch.squeeze(tempdata.cpu()) # torch.squeeze(gt.cpu())
-    np.savetxt(savepath + savename +'.txt', tempdata.detach().numpy())
-
-def  savebatchpointNocpu(savename, tempdata):
-    savepath = './output_testpoint/'
-    if(os.path.exists(savepath) == False):
-        os.makedirs(savepath)
-
-    # tempdata = torch.squeeze(tempdata) # torch.squeeze(gt.cpu())
-    np.savetxt(savepath + savename +'.txt',tempdata, fmt='%.4f')
-
-def  savebatchpoint(savename, tempdata):
-    savepath = './output_testpoint/'
-    if(os.path.exists(savepath) == False):
-        os.makedirs(savepath)
-
-    tempdata = torch.squeeze(tempdata[0].cpu()) # torch.squeeze(gt.cpu())
-    np.savetxt(savepath + savename +'.txt', tempdata.detach().numpy(), fmt='%.4f')
-
-def  savebatchtager(savename, tempdata):
-    savepath = './output_testpoint/'
-    if(os.path.exists(savepath) == False):
-        os.makedirs(savepath)
-
-    tempdata = torch.squeeze(tempdata[0].cpu()) # torch.squeeze(gt.cpu())
-    tempdata = torch.reshape(tempdata, ((-1, 1)))
-    np.savetxt(savepath + savename +'.txt', tempdata.detach().numpy(), fmt='%.4f')
-
-def  savelistsum(savename, tempdata):
-    savepath = './output_testpoint/'
-    if(os.path.exists(savepath) == False):
-        os.makedirs(savepath)
-
-    tempdata = torch.squeeze(tempdata.cpu()) # torch.squeeze(gt.cpu())
-    tempdata = torch.reshape(tempdata, ((-1, 1)))
-    np.savetxt(savepath + savename +'.txt', tempdata.detach().numpy(), fmt='%.4f')
 
 
 
@@ -296,9 +185,6 @@ def SavePthLog(checkpoints_dir,epoch,optimizer,PointNetModel,train_instance_acc,
         best_inctance_avg_iou = test_metrics['inctance_avg_iou']
 
     return best_acc,best_class_avg_iou,best_inctance_avg_iou
-
-
-
 
 
 def OneBatchVal(args,seg_classes,testDataLoader,PointNetModel):
@@ -359,20 +245,10 @@ def OneBatchVal(args,seg_classes,testDataLoader,PointNetModel):
         mean_shape_ious = np.mean(list(shape_ious.values()))
         test_metrics['accuracy'] = total_correct / float(total_seen)
         test_metrics['class_avg_accuracy'] = np.mean(
-            np.array(total_correct_class) / np.array(total_seen_class, dtype=np.float))
-
-        # 书写到 日志文件中
-        # for cat in sorted(shape_ious.keys()):
-        #     print('eval mIoU of %s %f' % (cat + ' ' * (14 - len(cat)), shape_ious[cat]))
+            np.array(total_correct_class) / np.array(total_seen_class))
 
         test_metrics['class_avg_iou'] = mean_shape_ious
         test_metrics['inctance_avg_iou'] = np.mean(all_shape_ious)
-
-    # 可以选择保留的参数
-    #Epoch %d                 epoch+1
-    # test Accuracy: %f         test_metrics['accuracy']
-    # Class avg mIOU: %f       test_metrics['class_avg_iou']
-    # Inctance avg mIOU: %f'  test_metrics['inctance_avg_iou']
 
     return  test_metrics
 
@@ -380,55 +256,34 @@ def OneBatchVal(args,seg_classes,testDataLoader,PointNetModel):
 def OneBatchTrain(args,optimizer,PointNetModel, points, label, target,criterion ):
 
     optimizer.zero_grad()
-
     PointNetModel = PointNetModel.train()
-
 
     seg_pred, trans_feat = PointNetModel(points, to_categorical(label, args.num_classes))
     OutbatchLabel= seg_pred
 
     seg_pred = seg_pred.contiguous().view(-1, args.num_part)
     target = target.view(-1, 1)[:, 0]
-    pred_choice = seg_pred.data.max(1)[1]   # max(1)：每1行的最大值
-
-    #correct = pred_choice.eq(target.data).cpu().sum()
+    pred_choice = seg_pred.data.max(1)[1]
     correct = pred_choice.eq(target.data).sum()
+    recorrect = correct.detach()
 
-    recorrect = correct.detach()  #   防止 correct 被反向传播改变
-
-
-    loss = criterion(seg_pred, target, trans_feat) # float32 ,  int64 float32
+    loss = criterion(seg_pred, target, trans_feat)
     loss.backward()
     optimizer.step()
 
     return recorrect,OutbatchLabel
 
 
-
-
-
-
-
-
-
 def main():
 
 
     args = parse_args()
-
     logger,experiment_dir,checkpoints_dir,seg_classes,seg_label_to_cat = onint(args)
-
     trainDataLoader, testDataLoader = load_data(args)
-
     PointNetModel, criterion, optimizer, start_epoch = OninitNetwork(args, logger, experiment_dir)
 
 
-
-   # poinitnet for 之前 必须存在
-    best_acc = 0
-    best_class_avg_iou = 0
-    best_inctance_avg_iou = 0
-    pcd_vector = o3d.geometry.PointCloud()  # 建立一个空的open3d点云 # 防止重复建立
+    pcd_vector = o3d.geometry.PointCloud()
 
 
     for epoch in range(start_epoch,args.epoch):
@@ -444,17 +299,9 @@ def main():
                                                                    target, criterion)
 
             mean_correct.append(recorrect.item() / (args.batch_size * args.npoint))
-
             batchtree_abstractleaf = SplitLeaf(args,epoch,points,OutbatchLabel)
-
-
-
         train_instance_acc = np.mean(mean_correct)
         print('Train accuracy is: %.5f' % train_instance_acc)
-
-
-########  point++  测试 并保存  #############
-
 
 if __name__ == '__main__':
 

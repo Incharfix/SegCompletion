@@ -24,18 +24,6 @@ from torch.autograd import Variable
 
 
 
-
-#备注： 在我们的论文中显示倒角距离和两个指标。
-#个人理解：  把这一类的class_choice给算出值是多大。
-'''
---dataroot  ./data/shapenet_part_Airplane50/
---class_choice Airplane
---netG Pth_FPnet/point_netG48.pth
-'''
-
-
-
-
 def distance_squre1(p1,p2):
     return (p1[0]-p2[0])**2+(p1[1]-p2[1])**2+(p1[2]-p2[2])**2
 
@@ -71,10 +59,10 @@ def RandomSample(input_part,partsumpoint):
         Temp_torch= torch.squeeze(input_part[i].cpu())
         Temp_torch = Temp_torch.detach().numpy()
 
-        n = np.random.choice(len(Temp_torch), partsumpoint, replace=False)  # s随机采500个数据，这种随机方式也可以自己定义
+        n = np.random.choice(len(Temp_torch), partsumpoint, replace=False)
         TempNumpy[i] = Temp_torch[n]
 
-    return torch.as_tensor(TempNumpy)  # NUMPY   to  tensor
+    return torch.as_tensor(TempNumpy)  # numpy   to  tensor
 
 
 
@@ -103,8 +91,6 @@ def Getinput_cropped_partial(args,device,batch_size,real_point,distance_order):
     input_cropped_partial = torch.squeeze(input_cropped_partial, 1)
     input_cropped_partial = input_cropped_partial.to(device)
 
-
-
     return input_cropped_partial
 
 
@@ -117,7 +103,6 @@ def Getreal_center(args,IDX,batch_size,real_point):
     if IDX % 5 == 0:
         IDX = 0
     distance_list = []
-    #    p_center  = real_point[0,0,index]
     p_center = index
     for num in range(args.pnum):
         distance_list.append(distance_squre(real_point[0, 0, num], p_center))
@@ -144,22 +129,12 @@ def GetGnetPoint(input_part_listA,point_netG):
 # input_cropped_partial
 def GetLossdist(length,device,criterion_PointLoss,input_cropped_partial,real_center, fake,real_point,CD,Gt_Pre,Pre_Gt):
 
-    # fake_whole = torch.cat((input_cropped_partial, fake), 1)
-    # fake_whole = fake_whole.to(device)
-    # real_point = real_point.to(device)
-
     real_center = real_center.to(device)
     dist_all, dist1, dist2 = criterion_PointLoss(torch.squeeze(fake, 1), torch.squeeze(real_center,1))
-               # +0.1*criterion_PointLoss(torch.squeeze(fake_part,1),torch.squeeze(real_center,1))
 
     dist_all = dist_all.cpu().detach().numpy()
     dist1 = dist1.cpu().detach().numpy()
     dist2 = dist2.cpu().detach().numpy()
-
-    # CD = CD + dist_all / length
-    # Gt_Pre = Gt_Pre + dist1 / length
-    # Pre_Gt = Pre_Gt + dist2 / length
-    # print(CD, Gt_Pre, Pre_Gt)
 
     return dist_all, dist1, dist2
 
@@ -202,11 +177,11 @@ if __name__ == '__main__':
         Closs.append(Pre_Gt)
 
 
-    avgepoch_Aloss = sum(Aloss) / len(Aloss)  # 所有的损失 / 摊平到每一个上
+    avgepoch_Aloss = sum(Aloss) / len(Aloss)
     CD = float('%.5f' % avgepoch_Aloss)
-    avgepoch_Aloss = sum(Bloss) / len(Bloss)  # 所有的损失 / 摊平到每一个上
+    avgepoch_Aloss = sum(Bloss) / len(Bloss)
     Gt_Pre = float('%.5f' % avgepoch_Aloss)
-    avgepoch_Aloss = sum(Closs) / len(Closs)  # 所有的损失 / 摊平到每一个上
+    avgepoch_Aloss = sum(Closs) / len(Closs)
     Pre_Gt = float('%.5f' % avgepoch_Aloss)
 
     print(CD, Gt_Pre, Pre_Gt)

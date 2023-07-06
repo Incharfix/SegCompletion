@@ -1,6 +1,7 @@
 
 import argparse
 
+
 def parse_args():
     parser = argparse.ArgumentParser('Model')
 
@@ -11,15 +12,15 @@ def parse_args():
 
 
     parser.add_argument('--root', type=str, default='../data_ours/TrainPoint/', help='Adam or SGD [default: Adam]')
-    parser.add_argument('--batch_size', type=int, default=2, help='Batch Size during training [default: 16]')
-    parser.add_argument('--epoch',  default=200, type=int, help='Epoch to run [default: 251]')
+    parser.add_argument('--batch_size', type=int, default=1, help='Batch Size during training [default: 16]')
+    parser.add_argument('--epoch',  default=301, type=int, help='Epoch to run [default: 251]')
 
 
     # Point++
-    parser.add_argument('--npoint', type=int,  default=40960, help='Point Number [default: 2048]')# 10240 #2048 * 7个2  = 262144
-    # FPnet 这俩个需一样
-    parser.add_argument('--num_points', default=1024, type=int,metavar='N', help='points in point-cloud (default: 1024)') # FPNETT下采样的个数，输入网络前
-    parser.add_argument('--FPnetNeed_point', type=int,  default=1024, help='每片你叶子需要的点数  Point Number [default: 2048]')
+    parser.add_argument('--npoint', type=int,  default=20480, help='Point Number [default: 2048]')
+    # FPnet
+    parser.add_argument('--num_points', default=1024, type=int,metavar='N', help='points in point-cloud (default: 1024)')
+    parser.add_argument('--FPnetNeed_point', type=int,  default=1024, help=' Point Number [default: 2048]')
 
     parser.add_argument('--point_scales_list', type=list, default=[1024,512,256],
                         help='number of points in each scales')  # default [2048,1024,512]
@@ -47,9 +48,9 @@ def parse_args():
     parser.add_argument('--momentum_original', type=int,  default=0.1, help='MOMENTUM_ORIGINAL')
     parser.add_argument('--momentum_deccay', type=int,  default=0.5, help='MOMENTUM_DECCAY')
 
-    # PFnet 中添加
-    parser.add_argument('--TxtLinePoint', default='./output_testpoint/TxtLinePoint.txt', type=str, help='损失 画曲线的地方')
-    parser.add_argument('--TxtLineFP', default='./output_testpoint/TxtLineFP.txt', type=str, help='损失 画曲线的地方')
+    # PFnet
+    parser.add_argument('--TxtLinePoint', default='./output_testpoint/TxtLinePoint.txt', type=str)
+    parser.add_argument('--TxtLineFP', default='./output_testpoint/TxtLineFP.txt', type=str)
 
     parser.add_argument('--num_scales', type=int, default=3, help='number of scales')
     parser.add_argument('--each_scales_size', type=int, default=1, help='each scales size')
@@ -60,9 +61,6 @@ def parse_args():
     parser.add_argument('--manualSeed', type=int, help='manual seed')
     parser.add_argument('--D_choose', type=int, default=1, help='0 not use D-net,1 use D-net')
     parser.add_argument('--cropmethod', default='random_center', help='random|center|random_center')
-
-
-
 
 
 
