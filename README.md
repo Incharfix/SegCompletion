@@ -1,9 +1,7 @@
 # SegCompletion
 SegCompletion
 
-## Cotton Dataset:
-https://pan.baidu.com/s/1BxP1iZoIDQWEtQjkuJWA5w
-password：iynb
+
 
 ## Basic environment configuration： Pytorch、Linux
 1. Chamfer3D file needs to be compiled before training, please refer to:https://github.com/diviswen/PMP-Net
